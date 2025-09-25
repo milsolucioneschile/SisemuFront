@@ -1,0 +1,22 @@
+{
+  "short_name": "Sistema Municipal",
+  "name": "Sistema de Gestión Municipal",
+  "description": "Plataforma integral para la administración municipal",
+  "icons": [
+    {
+      "src": "logo.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#41413d",
+  "background_color": "#ffffff",
+  "orientation": "portrait",
+  "categories": ["business", "productivity", "utilities"],
+  "screenshots": [],
+  "shortcuts": [],
+  "prefer_related_applications": false
+}
