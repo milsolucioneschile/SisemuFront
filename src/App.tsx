@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Login from "./components/Login";
 import VistaControlador from "./components/ControllerView";
 import VistaInspector from "./components/InspectorView";
@@ -25,6 +25,9 @@ function App() {
 
   const manejarLogin = (usuario: User) => {
     setUsuarioActual(usuario);
+    try {
+      localStorage.setItem("sesionUsuario", JSON.stringify(usuario));
+    } catch {}
     if (usuario.role === "controlador") {
       setVistaActual("dashboard");
     } else {
@@ -35,6 +38,9 @@ function App() {
   const manejarCerrarSesion = () => {
     setUsuarioActual(null);
     setVistaActual("login");
+    try {
+      localStorage.removeItem("sesionUsuario");
+    } catch {}
   };
 
   const irAFormularioOperador = () => {
@@ -58,6 +64,17 @@ function App() {
       setVistaActual("editar-incidente-inspector");
     }
   };
+
+  useEffect(() => {
+    try {
+      const guardado = localStorage.getItem("sesionUsuario");
+      if (guardado) {
+        const usuario: User = JSON.parse(guardado);
+        setUsuarioActual(usuario);
+        setVistaActual("dashboard");
+      }
+    } catch {}
+  }, []);
 
   const renderizarVistaActual = () => {
     switch (vistaActual) {

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { User } from "../types";
 import { api } from "../services/api";
+import GoogleMapAddressPicker from "./GoogleMapAddressPicker";
 
 interface FormularioNuevoIncidenteOperadorProps {
   usuario: User;
@@ -27,6 +28,7 @@ export default function FormularioNuevoIncidenteOperador({
     rutLlamante: "",
     telefonoLlamante: "",
   });
+  const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
 
   const zonas = ["zona1", "zona2", "zona3", "zona4", "zona5"];
 
@@ -431,14 +433,12 @@ export default function FormularioNuevoIncidenteOperador({
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Dirección del Incidente
                   </label>
-                  <input
-                    type="text"
-                    name="direccionIncidente"
+                  <GoogleMapAddressPicker
                     value={datosFormulario.direccionIncidente}
-                    onChange={manejarCambio}
-                    className="w-full col-12 px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="Dirección completa donde ocurrió el incidente"
-                    required
+                    onChange={(direccion) =>
+                      setDatosFormulario((prev) => ({ ...prev, direccionIncidente: direccion }))
+                    }
+                    onLocationChange={(c) => setCoords(c)}
                   />
                 </div>
 
