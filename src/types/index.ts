@@ -97,3 +97,32 @@ export interface LoginRequest extends SolicitudLogin {
 export interface LoginResponse extends RespuestaLogin {
   user: User;
 }
+
+// Zonas geográficas
+export interface Zona {
+  id: number;
+  nombre: string;
+  descripcion?: string;
+  // Coordenadas del polígono en orden, como pares lat/lng
+  vertices: { lat: number; lng: number }[];
+  colorHex?: string;
+  activa: boolean;
+  creadaEn?: string;
+  actualizadaEn?: string;
+}
+
+export interface CrearZonaDto {
+  nombre: string;
+  descripcion?: string;
+  vertices: { lat: number; lng: number }[];
+  colorHex?: string;
+  activa: boolean;
+}
+
+export interface ActualizarZonaDto {
+  nombre: string;
+  descripcion?: string;
+  vertices: { lat: number; lng: number }[];
+  colorHex?: string;
+  activa: boolean;
+}
