@@ -23,14 +23,14 @@ export default function FormularioNuevoIncidenteOperador({
     direccionIncidente: "",
     referencias: "",
     inspectorAsignado: "",
-    zona: "zona1",
     nombreLlamante: "",
     rutLlamante: "",
     telefonoLlamante: "",
+    latitud: "",
+    longitud: "",
   });
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
 
-  const zonas = ["zona1", "zona2", "zona3", "zona4", "zona5"];
 
   const [inspectores, setInspectores] = useState<
     Array<{ id: number; nombre: string }>
@@ -116,7 +116,8 @@ export default function FormularioNuevoIncidenteOperador({
         inspectorAsignado: incidenteParaEditar.inspectorAsignadoId
           ? String(incidenteParaEditar.inspectorAsignadoId)
           : "",
-        zona: "zona1",
+        latitud: incidenteParaEditar.latitud || "",
+        longitud: incidenteParaEditar.longitud || "",
         nombreLlamante: incidenteParaEditar.nombreLlamante || "",
         rutLlamante: incidenteParaEditar.rutLlamante || "",
         telefonoLlamante: incidenteParaEditar.telefonoLlamante || "",
@@ -180,12 +181,6 @@ export default function FormularioNuevoIncidenteOperador({
     }
   };
 
-  const manejarCambioZona = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setDatosFormulario((prev) => ({
-      ...prev,
-      zona: e.target.value,
-    }));
-  };
 
   const manejarEnvio = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -218,7 +213,8 @@ export default function FormularioNuevoIncidenteOperador({
         inspectorAsignadoId: datosFormulario.inspectorAsignado
           ? Number(datosFormulario.inspectorAsignado)
           : undefined,
-        zona: datosFormulario.zona,
+        latitud: parseFloat(datosFormulario.latitud),
+        longitud: parseFloat(datosFormulario.longitud),
         nombreLlamante: datosFormulario.nombreLlamante,
         rutLlamante: datosFormulario.rutLlamante,
         telefonoLlamante: datosFormulario.telefonoLlamante,
@@ -246,7 +242,8 @@ export default function FormularioNuevoIncidenteOperador({
           direccionIncidente: "",
           referencias: "",
           inspectorAsignado: "",
-          zona: "zona1",
+          latitud: "",
+          longitud: "",
           nombreLlamante: "",
           rutLlamante: "",
           telefonoLlamante: "",
@@ -351,23 +348,35 @@ export default function FormularioNuevoIncidenteOperador({
                 </div>
               </div>
 
-              <div className="w-full col-span-1 md:col-span-2 mt-4">
-                <label className="block text-sm font-medium text-gray-900 mb-1">
-                  Zona
-                </label>
-                <select
-                  name="zona"
-                  value={datosFormulario.zona}
-                  onChange={manejarCambioZona}
-                  className="w-full p-2 border border-gray-300 rounded-md bg-white text-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  required
-                >
-                  {zonas.map((zona) => (
-                    <option key={zona} value={zona}>
-                      {zona}
-                    </option>
-                  ))}
-                </select>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Latitud
+                  </label>
+                  <input
+                    type="text"
+                    name="latitud"
+                    value={datosFormulario.latitud}
+                    onChange={manejarCambio}
+                    className="w-full px-3 py-2 border border-gray-300 rounded bg-gray-50 text-gray-600"
+                    placeholder="Se llena automáticamente"
+                    readOnly
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Longitud
+                  </label>
+                  <input
+                    type="text"
+                    name="longitud"
+                    value={datosFormulario.longitud}
+                    onChange={manejarCambio}
+                    className="w-full px-3 py-2 border border-gray-300 rounded bg-gray-50 text-gray-600"
+                    placeholder="Se llena automáticamente"
+                    readOnly
+                  />
+                </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -438,7 +447,16 @@ export default function FormularioNuevoIncidenteOperador({
                     onChange={(direccion) =>
                       setDatosFormulario((prev) => ({ ...prev, direccionIncidente: direccion }))
                     }
-                    onLocationChange={(c) => setCoords(c)}
+                    onLocationChange={(c) => {
+                      setCoords(c);
+                      if (c) {
+                        setDatosFormulario((prev) => ({
+                          ...prev,
+                          latitud: c.lat.toString(),
+                          longitud: c.lng.toString(),
+                        }));
+                      }
+                    }}
                   />
                 </div>
 

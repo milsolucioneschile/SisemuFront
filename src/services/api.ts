@@ -157,7 +157,8 @@ export interface CrearIncidenteDto {
   referencias?: string;
   operadorId?: number;
   inspectorAsignadoId?: number;
-  zona: string;
+  latitud: number;
+  longitud: number;
 }
 
 export interface ActualizarIncidenteDto {
@@ -166,7 +167,8 @@ export interface ActualizarIncidenteDto {
   fechaHoraIncidente: string;
   direccionIncidente: string;
   referencias?: string;
-  zona: string;
+  latitud: number;
+  longitud: number;
   inspectorAsignadoId?: number;
 }
 

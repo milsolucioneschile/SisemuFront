@@ -183,7 +183,9 @@ const SimpleSidebar: React.FC<SimpleSidebarProps> = ({
       </div>
 
       <nav className="flex-1 py-4">
-        {menuItems.map((item) => (
+        {menuItems
+          .filter((item) => !(item.id === "zonas" && usuario.role === "inspector"))
+          .map((item) => (
           <div
             key={item.id}
             className="relative overflow-hidden"
