@@ -1,5 +1,13 @@
 import axios from "axios";
-import { User, LoginRequest, LoginResponse, Incident } from "../types";
+import {
+  User,
+  LoginRequest,
+  LoginResponse,
+  Incident,
+  Zona,
+  CrearZonaDto,
+  ActualizarZonaDto,
+} from "../types";
 
 const API_BASE_URL =
   process.env.REACT_APP_API_URL || "https://localhost:7007/api";
@@ -149,7 +157,8 @@ export interface CrearIncidenteDto {
   referencias?: string;
   operadorId?: number;
   inspectorAsignadoId?: number;
-  zona: string;
+  latitud: number;
+  longitud: number;
 }
 
 export interface ActualizarIncidenteDto {
@@ -158,7 +167,8 @@ export interface ActualizarIncidenteDto {
   fechaHoraIncidente: string;
   direccionIncidente: string;
   referencias?: string;
-  zona: string;
+  latitud: number;
+  longitud: number;
   inspectorAsignadoId?: number;
 }
 
@@ -476,6 +486,70 @@ export const api = {
       }
       throw new Error(
         "No se pudo eliminar el operador. Verifique que el backend esté ejecutándose en https://localhost:7007"
+      );
+    }
+  },
+
+  // --- ZONAS ---
+  async obtenerZonas(): Promise<Zona[]> {
+    try {
+      const response = await apiClient.get("/Zonas");
+      return (response.data || []) as Zona[];
+    } catch (error: any) {
+      console.error("❌ Error obteniendo zonas de la API:", error);
+      throw new Error("No se pueden obtener las zonas de la base de datos");
+    }
+  },
+
+  async obtenerZona(id: number): Promise<Zona> {
+    try {
+      const response = await apiClient.get(`/Zonas/${id}`);
+      return response.data as Zona;
+    } catch (error: any) {
+      console.error("❌ Error obteniendo zona de la API:", error);
+      throw new Error("No se puede obtener la zona de la base de datos");
+    }
+  },
+
+  async crearZona(dto: CrearZonaDto): Promise<Zona> {
+    try {
+      const response = await apiClient.post("/Zonas", dto);
+      return response.data as Zona;
+    } catch (error: any) {
+      console.error("❌ Error creando zona en la API:", error);
+      if (error.response?.data?.error) {
+        throw new Error(error.response.data.error);
+      }
+      throw new Error(
+        "No se pudo crear la zona. Verifique que el backend esté ejecutándose en https://localhost:7007"
+      );
+    }
+  },
+
+  async actualizarZona(id: number, dto: ActualizarZonaDto): Promise<void> {
+    try {
+      await apiClient.put(`/Zonas/${id}`, dto);
+    } catch (error: any) {
+      console.error("❌ Error actualizando zona en la API:", error);
+      if (error.response?.data?.error) {
+        throw new Error(error.response.data.error);
+      }
+      throw new Error(
+        "No se pudo actualizar la zona. Verifique que el backend esté ejecutándose en https://localhost:7007"
+      );
+    }
+  },
+
+  async eliminarZona(id: number): Promise<void> {
+    try {
+      await apiClient.delete(`/Zonas/${id}`);
+    } catch (error: any) {
+      console.error("❌ Error eliminando zona en la API:", error);
+      if (error.response?.data?.error) {
+        throw new Error(error.response.data.error);
+      }
+      throw new Error(
+        "No se pudo eliminar la zona. Verifique que el backend esté ejecutándose en https://localhost:7007"
       );
     }
   },

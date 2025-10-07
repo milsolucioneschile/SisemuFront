@@ -16,18 +16,17 @@ export default function FormularioNuevoIncidenteInspector({
   incidenteParaEditar,
   modoEdicion = false,
 }: FormularioNuevoIncidenteInspectorProps) {
-  const zonas = ["zona1", "zona2", "zona3", "zona4", "zona5"];
-
   const [datosFormulario, setDatosFormulario] = useState({
     descripcion: "",
     tipoIncidente: "",
     fechaHoraIncidente: "",
     direccionIncidente: "",
     referencias: "",
-    zona: "zona1",
     nombreLlamante: "",
     rutLlamante: "",
     telefonoLlamante: "",
+    latitud: "",
+    longitud: "",
   });
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
 
@@ -78,7 +77,8 @@ export default function FormularioNuevoIncidenteInspector({
         fechaHoraIncidente: toLocalInput(incidenteParaEditar.fechaHoraIncidente),
         direccionIncidente: incidenteParaEditar.direccionIncidente || "",
         referencias: incidenteParaEditar.referencias || "",
-        zona: incidenteParaEditar.zona || "zona1",
+        latitud: incidenteParaEditar.latitud || "",
+        longitud: incidenteParaEditar.longitud || "",
         nombreLlamante: incidenteParaEditar.nombreLlamante || "",
         rutLlamante: incidenteParaEditar.rutLlamante || "",
         telefonoLlamante: incidenteParaEditar.telefonoLlamante || "",
@@ -163,8 +163,8 @@ export default function FormularioNuevoIncidenteInspector({
       return;
     }
 
-    if (!datosFormulario.zona) {
-      setError("Seleccione una zona");
+    if (!datosFormulario.latitud || !datosFormulario.longitud) {
+      setError("Seleccione una ubicación en el mapa");
       return;
     }
 
@@ -180,7 +180,8 @@ export default function FormularioNuevoIncidenteInspector({
         fechaHoraIncidente: isoSinMs,
         direccionIncidente: datosFormulario.direccionIncidente,
         referencias: datosFormulario.referencias || "",
-        zona: datosFormulario.zona,
+        latitud: parseFloat(datosFormulario.latitud),
+        longitud: parseFloat(datosFormulario.longitud),
         operadorId: usuario.id,
         inspectorAsignadoId: usuario.id,
         nombreLlamante: datosFormulario.nombreLlamante,
@@ -205,7 +206,8 @@ export default function FormularioNuevoIncidenteInspector({
           fechaHoraIncidente: "",
           direccionIncidente: "",
           referencias: "",
-          zona: "zona1",
+          latitud: "",
+          longitud: "",
           nombreLlamante: "",
           rutLlamante: "",
           telefonoLlamante: "",
@@ -296,23 +298,35 @@ export default function FormularioNuevoIncidenteInspector({
                 </div>
               </div>
 
-              <div className="w-full col-span-1 md:col-span-2 mt-4">
-                <label className="block text-sm font-medium text-gray-900 mb-1">
-                  Zona
-                </label>
-                <select
-                  name="zona"
-                  value={datosFormulario.zona}
-                  onChange={manejarCambioInput}
-                  className="w-full p-2 border border-gray-300 rounded-md bg-white text-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  required
-                >
-                  {zonas.map((zona) => (
-                    <option key={zona} value={zona}>
-                      {zona}
-                    </option>
-                  ))}
-                </select>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Latitud
+                  </label>
+                  <input
+                    type="text"
+                    name="latitud"
+                    value={datosFormulario.latitud}
+                    onChange={manejarCambioInput}
+                    className="w-full px-3 py-2 border border-gray-300 rounded bg-gray-50 text-gray-600"
+                    placeholder="Se llena automáticamente"
+                    readOnly
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Longitud
+                  </label>
+                  <input
+                    type="text"
+                    name="longitud"
+                    value={datosFormulario.longitud}
+                    onChange={manejarCambioInput}
+                    className="w-full px-3 py-2 border border-gray-300 rounded bg-gray-50 text-gray-600"
+                    placeholder="Se llena automáticamente"
+                    readOnly
+                  />
+                </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -371,7 +385,16 @@ export default function FormularioNuevoIncidenteInspector({
                     onChange={(direccion) =>
                       setDatosFormulario((prev) => ({ ...prev, direccionIncidente: direccion }))
                     }
-                    onLocationChange={(c) => setCoords(c)}
+                    onLocationChange={(c) => {
+                      setCoords(c);
+                      if (c) {
+                        setDatosFormulario((prev) => ({
+                          ...prev,
+                          latitud: c.lat.toString(),
+                          longitud: c.lng.toString(),
+                        }));
+                      }
+                    }}
                   />
                 </div>
 

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { User, Incident } from "../types";
 import SimpleSidebar from "./SimpleSidebar";
 import IncidentesPage from "./dashboard/IncidentesPage";
+import ZonasPage from "./dashboard/ZonasPage";
 import DashboardView from "./dashboard/DashboardView";
 import { api } from "../services/api";
 
@@ -80,6 +81,48 @@ const MainLayout: React.FC<MainLayoutProps> = ({
           onEditarIncidente={handleEditar}
         />
       );
+    }
+
+    if (seccion === "configuracion") {
+      return (
+        <div className="p-6">
+          <div className="bg-white rounded-lg shadow p-6 text-gray-700">
+            <h2 className="text-xl font-semibold mb-4">Configuración</h2>
+            <ul className="divide-y">
+              <li className="py-3 flex items-center justify-between">
+                <div>
+                  <p className="font-medium">Editar zonas</p>
+                  <p className="text-sm text-gray-500">Definir regiones geográficas en el mapa</p>
+                </div>
+                {usuario.role === "inspector" ? (
+                  <span className="text-xs text-gray-400">No disponible para Inspector</span>
+                ) : (
+                  <button
+                    className="px-3 py-2 bg-[#41413d] text-white rounded hover:bg-[#2f2f2c]"
+                    onClick={() => setSeccion("zonas")}
+                  >
+                    Abrir
+                  </button>
+                )}
+              </li>
+            </ul>
+          </div>
+        </div>
+      );
+    }
+
+    if (seccion === "zonas") {
+      if (usuario.role === "inspector") {
+        return (
+          <div className="p-6">
+            <div className="bg-white rounded-lg shadow p-6 text-gray-700">
+              <h2 className="text-xl font-semibold mb-2">Acceso denegado</h2>
+              <p className="text-sm text-gray-600">Esta funcionalidad no está disponible para el rol Inspector.</p>
+            </div>
+          </div>
+        );
+      }
+      return <ZonasPage />;
     }
 
     return (

@@ -80,6 +80,25 @@ const SimpleSidebar: React.FC<SimpleSidebarProps> = ({
       ),
     },
     {
+      id: "zonas",
+      nombre: "Editar zonas",
+      icono: (
+        <svg
+          className="w-5 h-5 mr-3"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M4 7v10a2 2 0 002 2h6m4-12h2a2 2 0 012 2v2m-6 6h2a2 2 0 002-2v-2M8 7h.01M12 7h.01M16 7h.01M8 11h.01M12 11h.01M16 11h.01M8 15h.01M12 15h.01M16 15h.01"
+          />
+        </svg>
+      ),
+    },
+    {
       id: "reportes",
       nombre: "Reportes",
       icono: (
@@ -164,7 +183,9 @@ const SimpleSidebar: React.FC<SimpleSidebarProps> = ({
       </div>
 
       <nav className="flex-1 py-4">
-        {menuItems.map((item) => (
+        {menuItems
+          .filter((item) => !(item.id === "zonas" && usuario.role === "inspector"))
+          .map((item) => (
           <div
             key={item.id}
             className="relative overflow-hidden"

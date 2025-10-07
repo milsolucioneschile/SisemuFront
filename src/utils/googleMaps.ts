@@ -20,8 +20,8 @@ export function loadGoogleMapsApi(): Promise<typeof google> {
       process.env.REACT_APP_GOOGLE_MAPS_API_KEY ||
       "AIzaSyD7RNUA0E2cGvQ3heGdwwN5eQacFkR5zAA";
     const script = document.createElement("script");
-    // Usamos loading=async y evitamos cargar 'places' ya que no lo usamos
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&loading=async`;
+    // Cargamos librerías necesarias para dibujar polígonos (drawing, geometry)
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&loading=async&libraries=drawing,geometry`;
     script.async = true;
     script.defer = true;
     script.onload = () => resolve((window as any).google);
