@@ -199,24 +199,10 @@ export default function FormularioNuevoIncidenteInspector({
 
       window.dispatchEvent(new Event("incidente-actualizado"));
 
-      if (!modoEdicion) {
-        setDatosFormulario({
-          descripcion: "",
-          tipoIncidente: "",
-          fechaHoraIncidente: "",
-          direccionIncidente: "",
-          referencias: "",
-          latitud: "",
-          longitud: "",
-          nombreLlamante: "",
-          rutLlamante: "",
-          telefonoLlamante: "",
-        });
-      } else {
-        setTimeout(() => {
-          volverAVista();
-        }, 1500);
-      }
+      // Regresar a la vista anterior después de crear o editar
+      setTimeout(() => {
+        volverAVista();
+      }, 1500);
     } catch (err: any) {
       const mensajeError =
         err.message ||
