@@ -25,6 +25,7 @@ interface IncidentesPageProps {
   rolUsuario: "controlador" | "inspector";
   usuarioId: number;
   onEditarIncidente: (incidente: any) => void;
+  onVerSeguimiento?: (incidente: any) => void;
 }
 
 const estadoBadgeClass = (estado: FilaIncidente["estado"]) => {
@@ -56,6 +57,7 @@ const IncidentesPage: React.FC<IncidentesPageProps> = ({
   rolUsuario,
   usuarioId,
   onEditarIncidente,
+  onVerSeguimiento,
 }) => {
   const [filtroEstado, setFiltroEstado] = useState<Estado>("Todos");
   const [filas, setFilas] = useState<FilaIncidente[]>([]);
@@ -68,6 +70,12 @@ const IncidentesPage: React.FC<IncidentesPageProps> = ({
 
   const handleEditarIncidente = (incidente: FilaIncidente) => {
     onEditarIncidente(incidente);
+  };
+
+  const handleVerSeguimiento = (incidente: FilaIncidente) => {
+    if (onVerSeguimiento) {
+      onVerSeguimiento(incidente);
+    }
   };
 
   const handleEliminarIncidente = async (incidente: FilaIncidente) => {
@@ -255,7 +263,7 @@ const IncidentesPage: React.FC<IncidentesPageProps> = ({
     {
       key: "acciones",
       header: "ACCIONES",
-      className: "w-40 text-center",
+      className: "w-48 text-center",
       render: (_, fila: FilaIncidente) => (
         <div className="flex justify-center gap-1">
           <button
@@ -285,6 +293,35 @@ const IncidentesPage: React.FC<IncidentesPageProps> = ({
             </svg>
             Editar
           </button>
+          {onVerSeguimiento && (
+            <button
+              onClick={() => handleVerSeguimiento(fila)}
+              className="px-2 py-1 text-xs text-white rounded flex items-center gap-1 border-0"
+              style={{ backgroundColor: "#3b82f6", border: "none" }}
+              onMouseEnter={(e) =>
+                (e.currentTarget.style.backgroundColor = "#2563eb")
+              }
+              onMouseLeave={(e) =>
+                (e.currentTarget.style.backgroundColor = "#3b82f6")
+              }
+              title="Ver seguimiento"
+            >
+              <svg
+                className="w-3 h-3"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"
+                />
+              </svg>
+              Seguimiento
+            </button>
+          )}
           <button
             onClick={() => handleEliminarIncidente(fila)}
             className="px-2 py-1 text-xs text-white rounded flex items-center gap-1 border-0"

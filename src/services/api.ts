@@ -7,6 +7,17 @@ import {
   Zona,
   CrearZonaDto,
   ActualizarZonaDto,
+  ComentarioIncidente,
+  CrearComentarioDto,
+  HistorialEstado,
+  CambiarEstadoDto,
+  RespuestaCambioEstado,
+  LlamadaRecurrente,
+  CrearLlamadaRecurrenteDto,
+  ArchivoAdjunto,
+  SeguimientoCompleto,
+  EstadoIncidente,
+  TipoUsuarioSeguimiento,
 } from "../types";
 
 const API_BASE_URL =
@@ -552,5 +563,192 @@ export const api = {
         "No se pudo eliminar la zona. Verifique que el backend esté ejecutándose en https://localhost:7007"
       );
     }
+  },
+
+  // ===== SERVICIOS DE SEGUIMIENTO DE INCIDENTES =====
+
+  // --- COMENTARIOS ---
+  async obtenerComentarios(incidenteId: number): Promise<ComentarioIncidente[]> {
+    try {
+      const response = await apiClient.get(`/incidentes/${incidenteId}/comentarios`);
+      return response.data || [];
+    } catch (error: any) {
+      console.error("❌ Error obteniendo comentarios:", error);
+      throw new Error("No se pudieron obtener los comentarios del incidente");
+    }
+  },
+
+  async agregarComentario(incidenteId: number, dto: CrearComentarioDto): Promise<ComentarioIncidente> {
+    try {
+      const response = await apiClient.post(`/incidentes/${incidenteId}/comentarios`, dto);
+      console.log("✅ Comentario agregado:", response.data);
+      return response.data;
+    } catch (error: any) {
+      console.error("❌ Error agregando comentario:", error);
+      if (error.response?.data?.error) {
+        throw new Error(error.response.data.error);
+      }
+      throw new Error("No se pudo agregar el comentario");
+    }
+  },
+
+  // --- CAMBIOS DE ESTADO ---
+  async cambiarEstado(incidenteId: number, dto: CambiarEstadoDto): Promise<RespuestaCambioEstado> {
+    try {
+      const response = await apiClient.put(`/incidentes/${incidenteId}/cambiar-estado`, dto);
+      console.log("✅ Estado cambiado:", response.data);
+      return response.data;
+    } catch (error: any) {
+      console.error("❌ Error cambiando estado:", error);
+      if (error.response?.data?.error) {
+        throw new Error(error.response.data.error);
+      }
+      throw new Error("No se pudo cambiar el estado del incidente");
+    }
+  },
+
+  async obtenerHistorialEstados(incidenteId: number): Promise<HistorialEstado[]> {
+    try {
+      const response = await apiClient.get(`/incidentes/${incidenteId}/historial-estados`);
+      return response.data || [];
+    } catch (error: any) {
+      console.error("❌ Error obteniendo historial de estados:", error);
+      throw new Error("No se pudo obtener el historial de estados");
+    }
+  },
+
+  // --- LLAMADAS RECURRENTES ---
+  async obtenerLlamadasRecurrentes(incidenteId: number): Promise<LlamadaRecurrente[]> {
+    try {
+      const response = await apiClient.get(`/incidentes/${incidenteId}/llamadas-recurrentes`);
+      return response.data || [];
+    } catch (error: any) {
+      console.error("❌ Error obteniendo llamadas recurrentes:", error);
+      throw new Error("No se pudieron obtener las llamadas recurrentes");
+    }
+  },
+
+  async agregarLlamadaRecurrente(incidenteId: number, dto: CrearLlamadaRecurrenteDto): Promise<LlamadaRecurrente> {
+    try {
+      const response = await apiClient.post(`/incidentes/${incidenteId}/llamadas-recurrentes`, dto);
+      console.log("✅ Llamada recurrente agregada:", response.data);
+      return response.data;
+    } catch (error: any) {
+      console.error("❌ Error agregando llamada recurrente:", error);
+      if (error.response?.data?.error) {
+        throw new Error(error.response.data.error);
+      }
+      throw new Error("No se pudo agregar la llamada recurrente");
+    }
+  },
+
+  // --- ARCHIVOS ADJUNTOS ---
+  async obtenerArchivosAdjuntos(incidenteId: number): Promise<ArchivoAdjunto[]> {
+    try {
+      const response = await apiClient.get(`/incidentes/${incidenteId}/archivos`);
+      return response.data || [];
+    } catch (error: any) {
+      console.error("❌ Error obteniendo archivos adjuntos:", error);
+      throw new Error("No se pudieron obtener los archivos adjuntos");
+    }
+  },
+
+  // --- SEGUIMIENTO COMPLETO ---
+  async obtenerSeguimientoCompleto(incidenteId: number): Promise<SeguimientoCompleto> {
+    try {
+      const response = await apiClient.get(`/incidentes/${incidenteId}/seguimiento-completo`);
+      return response.data;
+    } catch (error: any) {
+      console.error("❌ Error obteniendo seguimiento completo:", error);
+      throw new Error("No se pudo obtener el seguimiento completo del incidente");
+    }
+  },
+
+  // --- UTILIDADES ---
+  obtenerEstadosDisponibles(): EstadoIncidente[] {
+    return ["Pendiente", "Abierto", "En Proceso", "Resuelto", "Cerrado", "Cancelado"];
+  },
+
+  obtenerTiposUsuario(): TipoUsuarioSeguimiento[] {
+    return ["operador", "inspector", "admin"];
+  },
+
+  // Validaciones
+  validarComentario(comentario: CrearComentarioDto): string[] {
+    const errores: string[] = [];
+    
+    if (!comentario.contenido || comentario.contenido.trim().length === 0) {
+      errores.push("El contenido del comentario es requerido");
+    }
+    
+    if (comentario.contenido && comentario.contenido.length > 2000) {
+      errores.push("El comentario no puede exceder 2000 caracteres");
+    }
+    
+    if (!comentario.usuarioId || comentario.usuarioId <= 0) {
+      errores.push("El ID del usuario es requerido");
+    }
+    
+    if (!comentario.tipoUsuario || !this.obtenerTiposUsuario().includes(comentario.tipoUsuario)) {
+      errores.push("El tipo de usuario es requerido y debe ser válido");
+    }
+    
+    if (!comentario.nombreUsuario || comentario.nombreUsuario.trim().length === 0) {
+      errores.push("El nombre del usuario es requerido");
+    }
+    
+    return errores;
+  },
+
+  validarCambioEstado(cambioEstado: CambiarEstadoDto): string[] {
+    const errores: string[] = [];
+    
+    if (!cambioEstado.estadoNuevo || !this.obtenerEstadosDisponibles().includes(cambioEstado.estadoNuevo)) {
+      errores.push("El nuevo estado es requerido y debe ser válido");
+    }
+    
+    if (cambioEstado.comentario && cambioEstado.comentario.length > 2000) {
+      errores.push("El comentario no puede exceder 2000 caracteres");
+    }
+    
+    if (!cambioEstado.usuarioId || cambioEstado.usuarioId <= 0) {
+      errores.push("El ID del usuario es requerido");
+    }
+    
+    if (!cambioEstado.tipoUsuario || !this.obtenerTiposUsuario().includes(cambioEstado.tipoUsuario)) {
+      errores.push("El tipo de usuario es requerido y debe ser válido");
+    }
+    
+    if (!cambioEstado.nombreUsuario || cambioEstado.nombreUsuario.trim().length === 0) {
+      errores.push("El nombre del usuario es requerido");
+    }
+    
+    return errores;
+  },
+
+  validarLlamadaRecurrente(llamada: CrearLlamadaRecurrenteDto): string[] {
+    const errores: string[] = [];
+    
+    if (!llamada.fechaHoraLlamada) {
+      errores.push("La fecha y hora de la llamada es requerida");
+    }
+    
+    if (llamada.fechaHoraLlamada && new Date(llamada.fechaHoraLlamada) > new Date()) {
+      errores.push("La fecha de la llamada no puede ser futura");
+    }
+    
+    if (!llamada.nombreLlamante || llamada.nombreLlamante.trim().length === 0) {
+      errores.push("El nombre del llamante es requerido");
+    }
+    
+    if (!llamada.telefonoLlamante || llamada.telefonoLlamante.trim().length === 0) {
+      errores.push("El teléfono del llamante es requerido");
+    }
+    
+    if (!llamada.operadorId || llamada.operadorId <= 0) {
+      errores.push("El ID del operador es requerido");
+    }
+    
+    return errores;
   },
 };

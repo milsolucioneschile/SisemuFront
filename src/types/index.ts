@@ -126,3 +126,153 @@ export interface ActualizarZonaDto {
   colorHex?: string;
   activa: boolean;
 }
+
+// ===== TIPOS PARA SEGUIMIENTO DE INCIDENTES =====
+
+// Estados disponibles para incidentes
+export type EstadoIncidente = 
+  | "Pendiente" 
+  | "Abierto" 
+  | "En Proceso" 
+  | "Resuelto" 
+  | "Cerrado" 
+  | "Cancelado";
+
+// Tipos de usuario para seguimiento
+export type TipoUsuarioSeguimiento = "operador" | "inspector" | "admin";
+
+// Comentarios de incidentes
+export interface ComentarioIncidente {
+  id: number;
+  incidenteId: number;
+  contenido: string;
+  fechaCreacion: string;
+  usuarioId: number;
+  tipoUsuario: TipoUsuarioSeguimiento;
+  nombreUsuario: string;
+  historialEstadoId?: number | null;
+  estadoAnterior?: string | null;
+  estadoNuevo?: string | null;
+}
+
+// DTO para crear comentarios
+export interface CrearComentarioDto {
+  contenido: string;
+  usuarioId: number;
+  tipoUsuario: TipoUsuarioSeguimiento;
+  nombreUsuario: string;
+}
+
+// Historial de cambios de estado
+export interface HistorialEstado {
+  id: number;
+  incidenteId: number;
+  estadoAnterior: string;
+  estadoNuevo: EstadoIncidente;
+  comentario?: string | null;
+  fechaCambio: string;
+  tipoUsuario: TipoUsuarioSeguimiento;
+  nombreUsuario: string;
+}
+
+// DTO para cambiar estado
+export interface CambiarEstadoDto {
+  estadoNuevo: EstadoIncidente;
+  comentario?: string;
+  usuarioId: number;
+  tipoUsuario: TipoUsuarioSeguimiento;
+  nombreUsuario: string;
+}
+
+// Respuesta de cambio de estado
+export interface RespuestaCambioEstado {
+  mensaje: string;
+  estadoAnterior: string;
+  estadoNuevo: EstadoIncidente;
+  fechaCambio: string;
+  comentario?: string | null;
+  comentarioId?: number | null;
+  historialId: number;
+  tieneComentario: boolean;
+}
+
+// Llamadas recurrentes
+export interface LlamadaRecurrente {
+  id: number;
+  incidenteId: number;
+  fechaHoraLlamada: string;
+  nombreLlamante: string;
+  rutLlamante: string;
+  telefonoLlamante: string;
+  descripcionAdicional?: string;
+  comentarios?: string;
+  fechaRegistro: string;
+  operadorId: number;
+  operadorNombre: string;
+}
+
+// DTO para crear llamada recurrente
+export interface CrearLlamadaRecurrenteDto {
+  fechaHoraLlamada: string;
+  nombreLlamante: string;
+  rutLlamante: string;
+  telefonoLlamante: string;
+  descripcionAdicional?: string;
+  comentarios?: string;
+  operadorId: number;
+}
+
+// Archivos adjuntos (ya implementado en backend)
+export interface ArchivoAdjunto {
+  id: number;
+  incidenteId: number;
+  nombreOriginal: string;
+  nombreArchivo: string;
+  tipoArchivo: 'imagen' | 'video' | 'audio';
+  extension: string;
+  tamañoBytes: number;
+  tamañoFormateado: string;
+  urlArchivo: string;
+  descripcion?: string;
+  fechaSubida: string;
+  usuarioId: number;
+  tipoUsuario: TipoUsuarioSeguimiento;
+  nombreUsuario: string;
+}
+
+// Seguimiento completo de un incidente
+export interface SeguimientoCompleto {
+  incidente: {
+    id: number;
+    descripcion: string;
+    tipo: string;
+    estado: EstadoIncidente;
+    fechaHoraIncidente: string;
+    fechaHoraRegistro: string;
+    direccionIncidente: string;
+    latitud: number;
+    longitud: number;
+    zona?: string;
+    nombreLlamante: string;
+    rutLlamante: string;
+    telefonoLlamante: string;
+    categoria?: string;
+    operador?: string;
+    inspectorAsignado?: string;
+  };
+  historialEstados: HistorialEstado[];
+  comentarios: ComentarioIncidente[];
+  archivosAdjuntos: ArchivoAdjunto[];
+  llamadasRecurrentes: LlamadaRecurrente[];
+}
+
+// Eventos del timeline unificado
+export interface EventoTimeline {
+  id: string;
+  tipo: 'comentario' | 'cambio_estado' | 'llamada' | 'archivo';
+  fecha: string;
+  usuario: string;
+  titulo: string;
+  descripcion: string;
+  datos?: any; // Datos específicos del tipo de evento
+}
