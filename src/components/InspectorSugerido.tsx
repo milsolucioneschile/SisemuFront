@@ -26,6 +26,7 @@ import {
   MyLocation,
 } from '@mui/icons-material';
 import { api } from '../services/api';
+import MapaInspectores from './MapaInspectores';
 
 interface InspectorSugeridoProps {
   latitud: number;
@@ -44,9 +45,11 @@ const InspectorSugerido: React.FC<InspectorSugeridoProps> = ({
 }) => {
   const [inspectorCercano, setInspectorCercano] = useState<any>(null);
   const [inspectoresDisponibles, setInspectoresDisponibles] = useState<any[]>([]);
+  const [inspectoresConUbicacion, setInspectoresConUbicacion] = useState<any[]>([]);
   const [cargando, setCargando] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [mostrarListaCompleta, setMostrarListaCompleta] = useState(false);
+  const [mostrarMapa, setMostrarMapa] = useState(true); // Mostrar mapa por defecto
 
   const cargarInspectorCercano = async () => {
     if (!latitud || !longitud) return;
@@ -78,8 +81,47 @@ const InspectorSugerido: React.FC<InspectorSugeridoProps> = ({
     }
   };
 
+  const cargarInspectoresConUbicacion = async () => {
+    try {
+      const inspectores = await api.obtenerInspectoresConUbicacion();
+      
+      // Calcular distancias para cada inspector
+      const inspectoresConDistancia = inspectores.map(inspector => {
+        const distancia = calcularDistancia(latitud, longitud, inspector.latitud, inspector.longitud);
+        return {
+          ...inspector,
+          distancia,
+          distanciaFormateada: formatearDistancia(distancia),
+        };
+      });
+
+      // Ordenar por distancia
+      inspectoresConDistancia.sort((a, b) => a.distancia - b.distancia);
+      
+      setInspectoresConUbicacion(inspectoresConDistancia);
+    } catch (error) {
+      console.error('Error cargando inspectores con ubicación:', error);
+    }
+  };
+
+  const calcularDistancia = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
+    const R = 6371e3; // Radio de la Tierra en metros
+    const φ1 = lat1 * Math.PI / 180;
+    const φ2 = lat2 * Math.PI / 180;
+    const Δφ = (lat2 - lat1) * Math.PI / 180;
+    const Δλ = (lon2 - lon1) * Math.PI / 180;
+
+    const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) +
+              Math.cos(φ1) * Math.cos(φ2) *
+              Math.sin(Δλ/2) * Math.sin(Δλ/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+
+    return R * c; // Distancia en metros
+  };
+
   useEffect(() => {
     cargarInspectorCercano();
+    cargarInspectoresConUbicacion();
   }, [latitud, longitud]);
 
   const handleSeleccionarInspector = (inspectorId: string) => {
@@ -181,6 +223,30 @@ const InspectorSugerido: React.FC<InspectorSugeridoProps> = ({
                 Coordenadas: {latitud.toFixed(6)}, {longitud.toFixed(6)}
               </Typography>
             </Box>
+
+            {/* Botón para mostrar/ocultar mapa */}
+            <Box sx={{ mb: 2, textAlign: 'center' }}>
+              <Button
+                variant="outlined"
+                startIcon={<LocationOn />}
+                onClick={() => setMostrarMapa(!mostrarMapa)}
+                size="small"
+              >
+                {mostrarMapa ? 'Ocultar Mapa' : 'Mostrar Mapa'}
+              </Button>
+            </Box>
+
+            {/* Mapa de Inspectores */}
+            {mostrarMapa && (
+              <MapaInspectores
+                latitudIncidente={latitud}
+                longitudIncidente={longitud}
+                inspectores={inspectoresConUbicacion}
+                inspectorSeleccionado={inspectorSeleccionado}
+                onInspectorSelect={(inspectorId) => handleSeleccionarInspector(inspectorId.toString())}
+                direccionIncidente={direccionIncidente}
+              />
+            )}
 
             {/* Lista de Inspectores Disponibles */}
             <Box sx={{ mb: 2 }}>

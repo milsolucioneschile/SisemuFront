@@ -8,7 +8,7 @@ type FilaIncidente = {
   tipo: string;
   fechaHoraIncidente: string;
   fechaHoraRegistro: string;
-  estado: "Pendiente" | "Abierto" | "Cerrado";
+  estado: "Pendiente" | "En Proceso" | "Resuelto" | "Cerrado" | "Cancelado";
   direccionIncidente: string;
   referencias: string;
   categoria: string;
@@ -31,11 +31,15 @@ interface IncidentesPageProps {
 const estadoBadgeClass = (estado: FilaIncidente["estado"]) => {
   switch (estado) {
     case "Pendiente":
-      return "bg-yellow-100 text-yellow-800";
-    case "Abierto":
-      return "bg-blue-100 text-blue-800";
+      return "bg-orange-100 text-orange-800"; // Naranja
+    case "En Proceso":
+      return "bg-blue-100 text-blue-800"; // Azul
+    case "Resuelto":
+      return "bg-green-100 text-green-800"; // Verde
     case "Cerrado":
-      return "bg-green-100 text-green-800";
+      return "bg-gray-100 text-gray-800"; // Gris claro
+    case "Cancelado":
+      return "bg-red-100 text-red-800"; // Rojo
     default:
       return "bg-gray-100 text-gray-800";
   }

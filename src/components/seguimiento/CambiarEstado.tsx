@@ -98,19 +98,17 @@ const CambiarEstado: React.FC<CambiarEstadoProps> = ({
   const obtenerColorEstado = (estado: string) => {
     switch (estado) {
       case 'Pendiente':
-        return 'warning';
-      case 'Abierto':
-        return 'info';
+        return 'warning'; // Naranja
       case 'En Proceso':
-        return 'primary';
+        return 'primary'; // Azul
       case 'Resuelto':
-        return 'success';
+        return 'success'; // Verde
       case 'Cerrado':
-        return 'default';
+        return 'grey'; // Gris claro
       case 'Cancelado':
-        return 'error';
+        return 'error'; // Rojo
       default:
-        return 'default';
+        return 'grey';
     }
   };
 

@@ -543,19 +543,6 @@ export default function FormularioNuevoIncidenteOperador({
                 </div>
               </div>
 
-              {/* Asignación de Inspector */}
-              {coords && (
-                <InspectorSugerido
-                  latitud={coords.lat}
-                  longitud={coords.lng}
-                  inspectorSeleccionado={datosFormulario.inspectorAsignado}
-                  onInspectorChange={(inspectorId) => 
-                    setDatosFormulario(prev => ({ ...prev, inspectorAsignado: inspectorId }))
-                  }
-                  direccionIncidente={datosFormulario.direccionIncidente}
-                />
-              )}
-
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -636,6 +623,19 @@ export default function FormularioNuevoIncidenteOperador({
                     }}
                   />
                 </div>
+
+                {/* Asignación de Inspector - Después del mapa de ubicación */}
+                {coords && (
+                  <InspectorSugerido
+                    latitud={coords.lat}
+                    longitud={coords.lng}
+                    inspectorSeleccionado={datosFormulario.inspectorAsignado}
+                    onInspectorChange={(inspectorId) => 
+                      setDatosFormulario(prev => ({ ...prev, inspectorAsignado: inspectorId }))
+                    }
+                    direccionIncidente={datosFormulario.direccionIncidente}
+                  />
+                )}
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
@@ -736,7 +736,7 @@ export default function FormularioNuevoIncidenteOperador({
                       type="text"
                       value={
                         datosFormulario.inspectorAsignado
-                          ? "Abierto"
+                          ? "En Proceso"
                           : "Pendiente"
                       }
                       disabled

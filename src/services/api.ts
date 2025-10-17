@@ -354,6 +354,22 @@ export const api = {
     return response.data || [];
   },
 
+  async obtenerInspectoresConUbicacion(): Promise<Array<{
+    id: number;
+    nombre: string;
+    rut: string;
+    email: string;
+    telefono: string;
+    activo: boolean;
+    disponible: boolean;
+    latitud: number;
+    longitud: number;
+    fechaUltimaUbicacion?: string;
+  }>> {
+    const response = await apiClient.get("/Inspectores");
+    return response.data || [];
+  },
+
   async obtenerCategorias(): Promise<Categoria[]> {
     const response = await apiClient.get("/Incidentes/categorias");
     return response.data || [];
@@ -666,7 +682,7 @@ export const api = {
 
   // --- UTILIDADES ---
   obtenerEstadosDisponibles(): EstadoIncidente[] {
-    return ["Pendiente", "Abierto", "En Proceso", "Resuelto", "Cerrado", "Cancelado"];
+    return ["Pendiente", "En Proceso", "Resuelto", "Cerrado", "Cancelado"];
   },
 
   obtenerTiposUsuario(): TipoUsuarioSeguimiento[] {
@@ -830,31 +846,68 @@ export const api = {
     distanciaFormateada: string;
   } | null> {
     try {
-      const response = await apiClient.get('/inspectores/mas-cercano', {
-        params: { latitud, longitud }
+      const inspectores = await this.obtenerInspectoresConUbicacion();
+      
+      if (inspectores.length === 0) {
+        return null;
+      }
+
+      // Calcular distancias para cada inspector
+      const inspectoresConDistancia = inspectores.map(inspector => {
+        const distancia = this.calcularDistanciaHaversine(latitud, longitud, inspector.latitud, inspector.longitud);
+        return {
+          ...inspector,
+          distancia,
+          distanciaFormateada: this.formatearDistancia(distancia),
+        };
       });
-      return response.data;
+
+      // Filtrar solo inspectores disponibles y activos
+      const inspectoresDisponibles = inspectoresConDistancia.filter(
+        inspector => inspector.disponible && inspector.activo
+      );
+
+      if (inspectoresDisponibles.length === 0) {
+        return null;
+      }
+
+      // Ordenar por distancia y tomar el más cercano
+      inspectoresDisponibles.sort((a, b) => a.distancia - b.distancia);
+      const inspectorCercano = inspectoresDisponibles[0];
+
+      return {
+        inspector: inspectorCercano,
+        distancia: inspectorCercano.distancia,
+        distanciaFormateada: inspectorCercano.distanciaFormateada,
+      };
     } catch (error: any) {
-      console.error("❌ Error obteniendo inspector más cercano:", error);
+      console.error("❌ Error calculando inspector más cercano:", error);
       return null;
     }
   },
 
-  async obtenerInspectoresConUbicacion(): Promise<Array<{
-    id: number;
-    nombre: string;
-    latitud?: number;
-    longitud?: number;
-    distancia?: number;
-    distanciaFormateada?: string;
-    disponible: boolean;
-  }>> {
-    try {
-      const response = await apiClient.get('/inspectores/con-ubicacion');
-      return response.data || [];
-    } catch (error: any) {
-      console.error("❌ Error obteniendo inspectores con ubicación:", error);
-      return [];
+  // Función auxiliar para calcular distancia usando fórmula de Haversine
+  calcularDistanciaHaversine(lat1: number, lon1: number, lat2: number, lon2: number): number {
+    const R = 6371e3; // Radio de la Tierra en metros
+    const φ1 = lat1 * Math.PI / 180;
+    const φ2 = lat2 * Math.PI / 180;
+    const Δφ = (lat2 - lat1) * Math.PI / 180;
+    const Δλ = (lon2 - lon1) * Math.PI / 180;
+
+    const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) +
+              Math.cos(φ1) * Math.cos(φ2) *
+              Math.sin(Δλ/2) * Math.sin(Δλ/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+
+    return R * c; // Distancia en metros
+  },
+
+  // Función auxiliar para formatear distancia
+  formatearDistancia(distancia: number): string {
+    if (distancia < 1000) {
+      return `${Math.round(distancia)} m`;
+    } else {
+      return `${(distancia / 1000).toFixed(1)} km`;
     }
   },
 
@@ -863,10 +916,18 @@ export const api = {
     distanciaFormateada: string;
   }> {
     try {
-      const response = await apiClient.get(`/inspectores/${inspectorId}/distancia`, {
-        params: { latitud, longitud }
-      });
-      return response.data;
+      const inspectores = await this.obtenerInspectoresConUbicacion();
+      const inspector = inspectores.find(i => i.id === inspectorId);
+      
+      if (!inspector) {
+        return { distancia: 0, distanciaFormateada: 'N/A' };
+      }
+
+      const distancia = this.calcularDistanciaHaversine(latitud, longitud, inspector.latitud, inspector.longitud);
+      return {
+        distancia,
+        distanciaFormateada: this.formatearDistancia(distancia),
+      };
     } catch (error: any) {
       console.error("❌ Error calculando distancia:", error);
       return { distancia: 0, distanciaFormateada: 'N/A' };

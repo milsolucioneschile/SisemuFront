@@ -96,14 +96,13 @@ const AlertaRecurrente: React.FC<AlertaRecurrenteProps> = ({
 
   const obtenerColorEstado = (estado: string) => {
     const colores: { [key: string]: string } = {
-      'Pendiente': 'default',
-      'Abierto': 'primary',
-      'En Proceso': 'warning',
-      'Resuelto': 'success',
-      'Cerrado': 'info',
-      'Cancelado': 'error',
+      'Pendiente': 'warning', // Naranja
+      'En Proceso': 'primary', // Azul
+      'Resuelto': 'success', // Verde
+      'Cerrado': 'grey', // Gris claro
+      'Cancelado': 'error', // Rojo
     };
-    return colores[estado] || 'default';
+    return colores[estado] || 'grey';
   };
 
   return (

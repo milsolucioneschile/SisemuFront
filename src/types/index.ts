@@ -28,7 +28,7 @@ export interface Incidente {
   tipoIncidente: TipoIncidente;
   descripcion: string;
   referencias: string;
-  estado: "Pendiente" | "Abierto" | "Cerrado";
+  estado: EstadoIncidente;
   idInspectorAsignado?: number;
   nombreInspectorAsignado?: string;
   idOperadorRegistro?: number;
@@ -129,10 +129,9 @@ export interface ActualizarZonaDto {
 
 // ===== TIPOS PARA SEGUIMIENTO DE INCIDENTES =====
 
-// Estados disponibles para incidentes
+// Estados oficiales para incidentes (normalizados)
 export type EstadoIncidente = 
   | "Pendiente" 
-  | "Abierto" 
   | "En Proceso" 
   | "Resuelto" 
   | "Cerrado" 
