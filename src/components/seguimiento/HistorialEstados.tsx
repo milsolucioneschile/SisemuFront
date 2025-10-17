@@ -53,11 +53,11 @@ const HistorialEstados: React.FC<HistorialEstadosProps> = ({
       case 'Resuelto':
         return 'success';
       case 'Cerrado':
-        return 'default';
+        return 'grey';
       case 'Cancelado':
         return 'error';
       default:
-        return 'default';
+        return 'grey';
     }
   };
 

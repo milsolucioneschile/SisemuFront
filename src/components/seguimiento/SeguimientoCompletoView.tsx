@@ -360,16 +360,17 @@ const SeguimientoCompletoView: React.FC<SeguimientoCompletoProps> = ({
 
         {/* Tab Comentarios */}
         <TabPanel value={tabActual} index={1}>
+          <ListaComentarios
+            comentarios={seguimiento.comentarios}
+            cargando={false}
+          />
           <AgregarComentario
             incidenteId={incidenteId}
             usuario={usuario}
             onComentarioAgregado={handleComentarioAgregado}
             onError={setError}
           />
-          <ListaComentarios
-            comentarios={seguimiento.comentarios}
-            cargando={false}
-          />
+          
         </TabPanel>
 
         {/* Tab Estados */}
@@ -389,16 +390,17 @@ const SeguimientoCompletoView: React.FC<SeguimientoCompletoProps> = ({
 
         {/* Tab Llamadas */}
         <TabPanel value={tabActual} index={3}>
+          <ListaLlamadasRecurrentes
+            llamadas={seguimiento.llamadasRecurrentes}
+            cargando={false}
+          />
           <AgregarLlamadaRecurrente
             incidenteId={incidenteId}
             usuario={usuario}
             onLlamadaAgregada={handleLlamadaAgregada}
             onError={setError}
           />
-          <ListaLlamadasRecurrentes
-            llamadas={seguimiento.llamadasRecurrentes}
-            cargando={false}
-          />
+          
         </TabPanel>
 
         {/* Tab Archivos */}

@@ -673,6 +673,206 @@ export const api = {
     return ["operador", "inspector", "admin"];
   },
 
+  // --- DETECCIÓN DE INCIDENTES DUPLICADOS ---
+  async verificarIncidenteDuplicado(datosIncidente: any): Promise<{
+    esRepetido: boolean;
+    mensaje?: string;
+    datosCoincidentes?: string[];
+    incidentesSimilares?: any[];
+  }> {
+    try {
+      const response = await apiClient.post('/Incidentes/evaluar-repetido', {
+        rutLlamante: datosIncidente.rutLlamante,
+        telefonoLlamante: datosIncidente.telefonoLlamante,
+        latitud: datosIncidente.latitud || 0,
+        longitud: datosIncidente.longitud || 0
+      });
+      return response.data;
+    } catch (error: any) {
+      console.error("❌ Error verificando duplicado:", error);
+      // Si hay error, asumimos que no es duplicado para no bloquear el flujo
+      return { esRepetido: false };
+    }
+  },
+
+  // --- VERIFICACIÓN EN TIEMPO REAL ---
+  async verificarRutExistente(rut: string): Promise<{
+    existe: boolean;
+    incidentesAnteriores?: any[];
+    totalLlamadas?: number;
+  }> {
+    try {
+      if (!rut || rut.length < 8) return { existe: false };
+      
+      // Usar el endpoint real de evaluación de repetidos
+      const response = await apiClient.post('/Incidentes/evaluar-repetido', {
+        rutLlamante: rut,
+        telefonoLlamante: "",
+        latitud: 0,
+        longitud: 0
+      });
+      
+      if (response.data.esRepetido && response.data.incidentesSimilares) {
+        return {
+          existe: true,
+          totalLlamadas: response.data.incidentesSimilares.length,
+          incidentesAnteriores: response.data.incidentesSimilares.slice(0, 5) // Solo los primeros 5
+        };
+      }
+      
+      return { existe: false };
+    } catch (error: any) {
+      console.error("❌ Error verificando RUT:", error);
+      return { existe: false };
+    }
+  },
+
+  async verificarTelefonoExistente(telefono: string): Promise<{
+    existe: boolean;
+    incidentesAnteriores?: any[];
+    totalLlamadas?: number;
+  }> {
+    try {
+      if (!telefono || telefono.length < 8) return { existe: false };
+      
+      // Usar el endpoint real de evaluación de repetidos
+      const response = await apiClient.post('/Incidentes/evaluar-repetido', {
+        rutLlamante: "",
+        telefonoLlamante: telefono,
+        latitud: 0,
+        longitud: 0
+      });
+      
+      if (response.data.esRepetido && response.data.incidentesSimilares) {
+        return {
+          existe: true,
+          totalLlamadas: response.data.incidentesSimilares.length,
+          incidentesAnteriores: response.data.incidentesSimilares.slice(0, 5) // Solo los primeros 5
+        };
+      }
+      
+      return { existe: false };
+    } catch (error: any) {
+      console.error("❌ Error verificando teléfono:", error);
+      return { existe: false };
+    }
+  },
+
+  async verificarDireccionExistente(direccion: string, latitud?: number, longitud?: number): Promise<{
+    existe: boolean;
+    incidentesAnteriores?: any[];
+    totalIncidentes?: number;
+  }> {
+    try {
+      if (!direccion || direccion.length < 10) return { existe: false };
+      
+      // Usar el endpoint real de evaluación de repetidos
+      const response = await apiClient.post('/Incidentes/evaluar-repetido', {
+        rutLlamante: "",
+        telefonoLlamante: "",
+        latitud: latitud || 0,
+        longitud: longitud || 0
+      });
+      
+      if (response.data.esRepetido && response.data.incidentesSimilares) {
+        return {
+          existe: true,
+          totalIncidentes: response.data.incidentesSimilares.length,
+          incidentesAnteriores: response.data.incidentesSimilares.slice(0, 5) // Solo los primeros 5
+        };
+      }
+      
+      return { existe: false };
+    } catch (error: any) {
+      console.error("❌ Error verificando dirección:", error);
+      return { existe: false };
+    }
+  },
+
+  async obtenerHistorialLlamante(rut: string, telefono: string): Promise<{
+    incidentes: any[];
+    totalLlamadas: number;
+    ultimaLlamada?: string;
+    patronRecurrente: boolean;
+  }> {
+    try {
+      // Usar el endpoint real de evaluación de repetidos
+      const response = await apiClient.post('/Incidentes/evaluar-repetido', {
+        rutLlamante: rut,
+        telefonoLlamante: telefono,
+        latitud: 0,
+        longitud: 0
+      });
+      
+      if (response.data.esRepetido && response.data.incidentesSimilares) {
+        const incidentes = response.data.incidentesSimilares;
+        const ultimaLlamada = incidentes.length > 0 ? incidentes[0].fechaHoraIncidente : undefined;
+        
+        return {
+          incidentes,
+          totalLlamadas: incidentes.length,
+          ultimaLlamada,
+          patronRecurrente: incidentes.length >= 3 // Considerar recurrente si tiene 3+ llamadas
+        };
+      }
+      
+      return { incidentes: [], totalLlamadas: 0, patronRecurrente: false };
+    } catch (error: any) {
+      console.error("❌ Error obteniendo historial:", error);
+      return { incidentes: [], totalLlamadas: 0, patronRecurrente: false };
+    }
+  },
+
+  // --- ASIGNACIÓN AUTOMÁTICA DE INSPECTORES ---
+  async obtenerInspectorMasCercano(latitud: number, longitud: number): Promise<{
+    inspector: any;
+    distancia: number;
+    distanciaFormateada: string;
+  } | null> {
+    try {
+      const response = await apiClient.get('/inspectores/mas-cercano', {
+        params: { latitud, longitud }
+      });
+      return response.data;
+    } catch (error: any) {
+      console.error("❌ Error obteniendo inspector más cercano:", error);
+      return null;
+    }
+  },
+
+  async obtenerInspectoresConUbicacion(): Promise<Array<{
+    id: number;
+    nombre: string;
+    latitud?: number;
+    longitud?: number;
+    distancia?: number;
+    distanciaFormateada?: string;
+    disponible: boolean;
+  }>> {
+    try {
+      const response = await apiClient.get('/inspectores/con-ubicacion');
+      return response.data || [];
+    } catch (error: any) {
+      console.error("❌ Error obteniendo inspectores con ubicación:", error);
+      return [];
+    }
+  },
+
+  async calcularDistanciaInspector(inspectorId: number, latitud: number, longitud: number): Promise<{
+    distancia: number;
+    distanciaFormateada: string;
+  }> {
+    try {
+      const response = await apiClient.get(`/inspectores/${inspectorId}/distancia`, {
+        params: { latitud, longitud }
+      });
+      return response.data;
+    } catch (error: any) {
+      console.error("❌ Error calculando distancia:", error);
+      return { distancia: 0, distanciaFormateada: 'N/A' };
+    }
+  },
+
   // Validaciones
   validarComentario(comentario: CrearComentarioDto): string[] {
     const errores: string[] = [];

@@ -26,6 +26,7 @@ interface AgregarLlamadaRecurrenteProps {
   usuario: User;
   onLlamadaAgregada: (llamada: LlamadaRecurrente) => void;
   onError?: (error: string) => void;
+  onCancelar?: () => void;
 }
 
 const AgregarLlamadaRecurrente: React.FC<AgregarLlamadaRecurrenteProps> = ({
@@ -33,6 +34,7 @@ const AgregarLlamadaRecurrente: React.FC<AgregarLlamadaRecurrenteProps> = ({
   usuario,
   onLlamadaAgregada,
   onError,
+  onCancelar,
 }) => {
   const [fechaHoraLlamada, setFechaHoraLlamada] = useState<Date | null>(new Date());
   const [nombreLlamante, setNombreLlamante] = useState('');
@@ -184,7 +186,6 @@ const AgregarLlamadaRecurrente: React.FC<AgregarLlamadaRecurrenteProps> = ({
               label="Teléfono del Llamante"
               value={telefonoLlamante}
               onChange={(e) => setTelefonoLlamante(e.target.value)}
-              required
               disabled={cargando}
               placeholder="Ej: +56 9 8765 4321"
             />
@@ -228,12 +229,21 @@ const AgregarLlamadaRecurrente: React.FC<AgregarLlamadaRecurrenteProps> = ({
             />
           )}
 
-          <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', gap: 2 }}>
+            {onCancelar && (
+              <Button
+                variant="outlined"
+                onClick={onCancelar}
+                disabled={cargando}
+              >
+                Cancelar
+              </Button>
+            )}
             <Button
               type="submit"
               variant="contained"
               startIcon={cargando ? <CircularProgress size={20} /> : <Send />}
-              disabled={cargando || !fechaHoraLlamada || !nombreLlamante.trim() || !telefonoLlamante.trim()}
+              disabled={cargando || !fechaHoraLlamada || !nombreLlamante.trim()}
               sx={{ minWidth: 120 }}
             >
               {cargando ? 'Registrando...' : 'Registrar Llamada'}
