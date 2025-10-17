@@ -4,6 +4,7 @@ import SimpleSidebar from "./SimpleSidebar";
 import IncidentesPage from "./dashboard/IncidentesPage";
 import ZonasPage from "./dashboard/ZonasPage";
 import DashboardView from "./dashboard/DashboardView";
+import { SeguimientoModal } from "./seguimiento";
 import { api } from "../services/api";
 
 type MainLayoutProps = {
@@ -28,6 +29,14 @@ const MainLayout: React.FC<MainLayoutProps> = ({
   } | null>(null);
   const [incidents, setIncidents] = useState<Incident[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+  const [seguimientoModal, setSeguimientoModal] = useState<{
+    open: boolean;
+    incidenteId: number;
+    incidenteInfo?: any;
+  }>({
+    open: false,
+    incidenteId: 0,
+  });
 
   useEffect(() => {
     if (!toast) return;
@@ -67,6 +76,26 @@ const MainLayout: React.FC<MainLayoutProps> = ({
     onEditarIncidente(incidente);
   };
 
+  const handleVerSeguimiento = (incidente: any) => {
+    setSeguimientoModal({
+      open: true,
+      incidenteId: incidente.id,
+      incidenteInfo: {
+        id: incidente.id,
+        descripcion: incidente.descripcion,
+        tipo: incidente.tipo,
+        estado: incidente.estado,
+      },
+    });
+  };
+
+  const handleCerrarSeguimiento = () => {
+    setSeguimientoModal({
+      open: false,
+      incidenteId: 0,
+    });
+  };
+
   const renderContenido = () => {
     if (seccion === "dashboard") {
       return <DashboardView incidents={incidents} userRole={usuario.role} />;
@@ -79,6 +108,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({
           rolUsuario={usuario.role}
           usuarioId={usuario.id}
           onEditarIncidente={handleEditar}
+          onVerSeguimiento={handleVerSeguimiento}
         />
       );
     }
@@ -161,6 +191,15 @@ const MainLayout: React.FC<MainLayoutProps> = ({
           </div>
         )}
         {renderContenido()}
+        
+        {/* Modal de Seguimiento */}
+        <SeguimientoModal
+          open={seguimientoModal.open}
+          onClose={handleCerrarSeguimiento}
+          incidenteId={seguimientoModal.incidenteId}
+          usuario={usuario}
+          incidenteInfo={seguimientoModal.incidenteInfo}
+        />
       </div>
     </div>
   );

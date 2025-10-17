@@ -7,6 +7,17 @@ import {
   Zona,
   CrearZonaDto,
   ActualizarZonaDto,
+  ComentarioIncidente,
+  CrearComentarioDto,
+  HistorialEstado,
+  CambiarEstadoDto,
+  RespuestaCambioEstado,
+  LlamadaRecurrente,
+  CrearLlamadaRecurrenteDto,
+  ArchivoAdjunto,
+  SeguimientoCompleto,
+  EstadoIncidente,
+  TipoUsuarioSeguimiento,
 } from "../types";
 
 const API_BASE_URL =
@@ -343,6 +354,22 @@ export const api = {
     return response.data || [];
   },
 
+  async obtenerInspectoresConUbicacion(): Promise<Array<{
+    id: number;
+    nombre: string;
+    rut: string;
+    email: string;
+    telefono: string;
+    activo: boolean;
+    disponible: boolean;
+    latitud: number;
+    longitud: number;
+    fechaUltimaUbicacion?: string;
+  }>> {
+    const response = await apiClient.get("/Inspectores");
+    return response.data || [];
+  },
+
   async obtenerCategorias(): Promise<Categoria[]> {
     const response = await apiClient.get("/Incidentes/categorias");
     return response.data || [];
@@ -552,5 +579,437 @@ export const api = {
         "No se pudo eliminar la zona. Verifique que el backend esté ejecutándose en https://localhost:7007"
       );
     }
+  },
+
+  // ===== SERVICIOS DE SEGUIMIENTO DE INCIDENTES =====
+
+  // --- COMENTARIOS ---
+  async obtenerComentarios(incidenteId: number): Promise<ComentarioIncidente[]> {
+    try {
+      const response = await apiClient.get(`/incidentes/${incidenteId}/comentarios`);
+      return response.data || [];
+    } catch (error: any) {
+      console.error("❌ Error obteniendo comentarios:", error);
+      throw new Error("No se pudieron obtener los comentarios del incidente");
+    }
+  },
+
+  async agregarComentario(incidenteId: number, dto: CrearComentarioDto): Promise<ComentarioIncidente> {
+    try {
+      const response = await apiClient.post(`/incidentes/${incidenteId}/comentarios`, dto);
+      console.log("✅ Comentario agregado:", response.data);
+      return response.data;
+    } catch (error: any) {
+      console.error("❌ Error agregando comentario:", error);
+      if (error.response?.data?.error) {
+        throw new Error(error.response.data.error);
+      }
+      throw new Error("No se pudo agregar el comentario");
+    }
+  },
+
+  // --- CAMBIOS DE ESTADO ---
+  async cambiarEstado(incidenteId: number, dto: CambiarEstadoDto): Promise<RespuestaCambioEstado> {
+    try {
+      const response = await apiClient.put(`/incidentes/${incidenteId}/cambiar-estado`, dto);
+      console.log("✅ Estado cambiado:", response.data);
+      return response.data;
+    } catch (error: any) {
+      console.error("❌ Error cambiando estado:", error);
+      if (error.response?.data?.error) {
+        throw new Error(error.response.data.error);
+      }
+      throw new Error("No se pudo cambiar el estado del incidente");
+    }
+  },
+
+  async obtenerHistorialEstados(incidenteId: number): Promise<HistorialEstado[]> {
+    try {
+      const response = await apiClient.get(`/incidentes/${incidenteId}/historial-estados`);
+      return response.data || [];
+    } catch (error: any) {
+      console.error("❌ Error obteniendo historial de estados:", error);
+      throw new Error("No se pudo obtener el historial de estados");
+    }
+  },
+
+  // --- LLAMADAS RECURRENTES ---
+  async obtenerLlamadasRecurrentes(incidenteId: number): Promise<LlamadaRecurrente[]> {
+    try {
+      const response = await apiClient.get(`/incidentes/${incidenteId}/llamadas-recurrentes`);
+      return response.data || [];
+    } catch (error: any) {
+      console.error("❌ Error obteniendo llamadas recurrentes:", error);
+      throw new Error("No se pudieron obtener las llamadas recurrentes");
+    }
+  },
+
+  async agregarLlamadaRecurrente(incidenteId: number, dto: CrearLlamadaRecurrenteDto): Promise<LlamadaRecurrente> {
+    try {
+      const response = await apiClient.post(`/incidentes/${incidenteId}/llamadas-recurrentes`, dto);
+      console.log("✅ Llamada recurrente agregada:", response.data);
+      return response.data;
+    } catch (error: any) {
+      console.error("❌ Error agregando llamada recurrente:", error);
+      if (error.response?.data?.error) {
+        throw new Error(error.response.data.error);
+      }
+      throw new Error("No se pudo agregar la llamada recurrente");
+    }
+  },
+
+  // --- ARCHIVOS ADJUNTOS ---
+  async obtenerArchivosAdjuntos(incidenteId: number): Promise<ArchivoAdjunto[]> {
+    try {
+      const response = await apiClient.get(`/incidentes/${incidenteId}/archivos`);
+      return response.data || [];
+    } catch (error: any) {
+      console.error("❌ Error obteniendo archivos adjuntos:", error);
+      throw new Error("No se pudieron obtener los archivos adjuntos");
+    }
+  },
+
+  // --- SEGUIMIENTO COMPLETO ---
+  async obtenerSeguimientoCompleto(incidenteId: number): Promise<SeguimientoCompleto> {
+    try {
+      const response = await apiClient.get(`/incidentes/${incidenteId}/seguimiento-completo`);
+      return response.data;
+    } catch (error: any) {
+      console.error("❌ Error obteniendo seguimiento completo:", error);
+      throw new Error("No se pudo obtener el seguimiento completo del incidente");
+    }
+  },
+
+  // --- UTILIDADES ---
+  obtenerEstadosDisponibles(): EstadoIncidente[] {
+    return ["Pendiente", "En Proceso", "Resuelto", "Cerrado", "Cancelado"];
+  },
+
+  obtenerTiposUsuario(): TipoUsuarioSeguimiento[] {
+    return ["operador", "inspector", "admin"];
+  },
+
+  // --- DETECCIÓN DE INCIDENTES DUPLICADOS ---
+  async verificarIncidenteDuplicado(datosIncidente: any): Promise<{
+    esRepetido: boolean;
+    mensaje?: string;
+    datosCoincidentes?: string[];
+    incidentesSimilares?: any[];
+  }> {
+    try {
+      const response = await apiClient.post('/Incidentes/evaluar-repetido', {
+        rutLlamante: datosIncidente.rutLlamante,
+        telefonoLlamante: datosIncidente.telefonoLlamante,
+        latitud: datosIncidente.latitud || 0,
+        longitud: datosIncidente.longitud || 0
+      });
+      return response.data;
+    } catch (error: any) {
+      console.error("❌ Error verificando duplicado:", error);
+      // Si hay error, asumimos que no es duplicado para no bloquear el flujo
+      return { esRepetido: false };
+    }
+  },
+
+  // --- VERIFICACIÓN EN TIEMPO REAL ---
+  async verificarRutExistente(rut: string): Promise<{
+    existe: boolean;
+    incidentesAnteriores?: any[];
+    totalLlamadas?: number;
+  }> {
+    try {
+      if (!rut || rut.length < 8) return { existe: false };
+      
+      // Usar el endpoint real de evaluación de repetidos
+      const response = await apiClient.post('/Incidentes/evaluar-repetido', {
+        rutLlamante: rut,
+        telefonoLlamante: "",
+        latitud: 0,
+        longitud: 0
+      });
+      
+      if (response.data.esRepetido && response.data.incidentesSimilares) {
+        return {
+          existe: true,
+          totalLlamadas: response.data.incidentesSimilares.length,
+          incidentesAnteriores: response.data.incidentesSimilares.slice(0, 5) // Solo los primeros 5
+        };
+      }
+      
+      return { existe: false };
+    } catch (error: any) {
+      console.error("❌ Error verificando RUT:", error);
+      return { existe: false };
+    }
+  },
+
+  async verificarTelefonoExistente(telefono: string): Promise<{
+    existe: boolean;
+    incidentesAnteriores?: any[];
+    totalLlamadas?: number;
+  }> {
+    try {
+      if (!telefono || telefono.length < 8) return { existe: false };
+      
+      // Usar el endpoint real de evaluación de repetidos
+      const response = await apiClient.post('/Incidentes/evaluar-repetido', {
+        rutLlamante: "",
+        telefonoLlamante: telefono,
+        latitud: 0,
+        longitud: 0
+      });
+      
+      if (response.data.esRepetido && response.data.incidentesSimilares) {
+        return {
+          existe: true,
+          totalLlamadas: response.data.incidentesSimilares.length,
+          incidentesAnteriores: response.data.incidentesSimilares.slice(0, 5) // Solo los primeros 5
+        };
+      }
+      
+      return { existe: false };
+    } catch (error: any) {
+      console.error("❌ Error verificando teléfono:", error);
+      return { existe: false };
+    }
+  },
+
+  async verificarDireccionExistente(direccion: string, latitud?: number, longitud?: number): Promise<{
+    existe: boolean;
+    incidentesAnteriores?: any[];
+    totalIncidentes?: number;
+  }> {
+    try {
+      if (!direccion || direccion.length < 10) return { existe: false };
+      
+      // Usar el endpoint real de evaluación de repetidos
+      const response = await apiClient.post('/Incidentes/evaluar-repetido', {
+        rutLlamante: "",
+        telefonoLlamante: "",
+        latitud: latitud || 0,
+        longitud: longitud || 0
+      });
+      
+      if (response.data.esRepetido && response.data.incidentesSimilares) {
+        return {
+          existe: true,
+          totalIncidentes: response.data.incidentesSimilares.length,
+          incidentesAnteriores: response.data.incidentesSimilares.slice(0, 5) // Solo los primeros 5
+        };
+      }
+      
+      return { existe: false };
+    } catch (error: any) {
+      console.error("❌ Error verificando dirección:", error);
+      return { existe: false };
+    }
+  },
+
+  async obtenerHistorialLlamante(rut: string, telefono: string): Promise<{
+    incidentes: any[];
+    totalLlamadas: number;
+    ultimaLlamada?: string;
+    patronRecurrente: boolean;
+  }> {
+    try {
+      // Usar el endpoint real de evaluación de repetidos
+      const response = await apiClient.post('/Incidentes/evaluar-repetido', {
+        rutLlamante: rut,
+        telefonoLlamante: telefono,
+        latitud: 0,
+        longitud: 0
+      });
+      
+      if (response.data.esRepetido && response.data.incidentesSimilares) {
+        const incidentes = response.data.incidentesSimilares;
+        const ultimaLlamada = incidentes.length > 0 ? incidentes[0].fechaHoraIncidente : undefined;
+        
+        return {
+          incidentes,
+          totalLlamadas: incidentes.length,
+          ultimaLlamada,
+          patronRecurrente: incidentes.length >= 3 // Considerar recurrente si tiene 3+ llamadas
+        };
+      }
+      
+      return { incidentes: [], totalLlamadas: 0, patronRecurrente: false };
+    } catch (error: any) {
+      console.error("❌ Error obteniendo historial:", error);
+      return { incidentes: [], totalLlamadas: 0, patronRecurrente: false };
+    }
+  },
+
+  // --- ASIGNACIÓN AUTOMÁTICA DE INSPECTORES ---
+  async obtenerInspectorMasCercano(latitud: number, longitud: number): Promise<{
+    inspector: any;
+    distancia: number;
+    distanciaFormateada: string;
+  } | null> {
+    try {
+      const inspectores = await this.obtenerInspectoresConUbicacion();
+      
+      if (inspectores.length === 0) {
+        return null;
+      }
+
+      // Calcular distancias para cada inspector
+      const inspectoresConDistancia = inspectores.map(inspector => {
+        const distancia = this.calcularDistanciaHaversine(latitud, longitud, inspector.latitud, inspector.longitud);
+        return {
+          ...inspector,
+          distancia,
+          distanciaFormateada: this.formatearDistancia(distancia),
+        };
+      });
+
+      // Filtrar solo inspectores disponibles y activos
+      const inspectoresDisponibles = inspectoresConDistancia.filter(
+        inspector => inspector.disponible && inspector.activo
+      );
+
+      if (inspectoresDisponibles.length === 0) {
+        return null;
+      }
+
+      // Ordenar por distancia y tomar el más cercano
+      inspectoresDisponibles.sort((a, b) => a.distancia - b.distancia);
+      const inspectorCercano = inspectoresDisponibles[0];
+
+      return {
+        inspector: inspectorCercano,
+        distancia: inspectorCercano.distancia,
+        distanciaFormateada: inspectorCercano.distanciaFormateada,
+      };
+    } catch (error: any) {
+      console.error("❌ Error calculando inspector más cercano:", error);
+      return null;
+    }
+  },
+
+  // Función auxiliar para calcular distancia usando fórmula de Haversine
+  calcularDistanciaHaversine(lat1: number, lon1: number, lat2: number, lon2: number): number {
+    const R = 6371e3; // Radio de la Tierra en metros
+    const φ1 = lat1 * Math.PI / 180;
+    const φ2 = lat2 * Math.PI / 180;
+    const Δφ = (lat2 - lat1) * Math.PI / 180;
+    const Δλ = (lon2 - lon1) * Math.PI / 180;
+
+    const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) +
+              Math.cos(φ1) * Math.cos(φ2) *
+              Math.sin(Δλ/2) * Math.sin(Δλ/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+
+    return R * c; // Distancia en metros
+  },
+
+  // Función auxiliar para formatear distancia
+  formatearDistancia(distancia: number): string {
+    if (distancia < 1000) {
+      return `${Math.round(distancia)} m`;
+    } else {
+      return `${(distancia / 1000).toFixed(1)} km`;
+    }
+  },
+
+  async calcularDistanciaInspector(inspectorId: number, latitud: number, longitud: number): Promise<{
+    distancia: number;
+    distanciaFormateada: string;
+  }> {
+    try {
+      const inspectores = await this.obtenerInspectoresConUbicacion();
+      const inspector = inspectores.find(i => i.id === inspectorId);
+      
+      if (!inspector) {
+        return { distancia: 0, distanciaFormateada: 'N/A' };
+      }
+
+      const distancia = this.calcularDistanciaHaversine(latitud, longitud, inspector.latitud, inspector.longitud);
+      return {
+        distancia,
+        distanciaFormateada: this.formatearDistancia(distancia),
+      };
+    } catch (error: any) {
+      console.error("❌ Error calculando distancia:", error);
+      return { distancia: 0, distanciaFormateada: 'N/A' };
+    }
+  },
+
+  // Validaciones
+  validarComentario(comentario: CrearComentarioDto): string[] {
+    const errores: string[] = [];
+    
+    if (!comentario.contenido || comentario.contenido.trim().length === 0) {
+      errores.push("El contenido del comentario es requerido");
+    }
+    
+    if (comentario.contenido && comentario.contenido.length > 2000) {
+      errores.push("El comentario no puede exceder 2000 caracteres");
+    }
+    
+    if (!comentario.usuarioId || comentario.usuarioId <= 0) {
+      errores.push("El ID del usuario es requerido");
+    }
+    
+    if (!comentario.tipoUsuario || !this.obtenerTiposUsuario().includes(comentario.tipoUsuario)) {
+      errores.push("El tipo de usuario es requerido y debe ser válido");
+    }
+    
+    if (!comentario.nombreUsuario || comentario.nombreUsuario.trim().length === 0) {
+      errores.push("El nombre del usuario es requerido");
+    }
+    
+    return errores;
+  },
+
+  validarCambioEstado(cambioEstado: CambiarEstadoDto): string[] {
+    const errores: string[] = [];
+    
+    if (!cambioEstado.estadoNuevo || !this.obtenerEstadosDisponibles().includes(cambioEstado.estadoNuevo)) {
+      errores.push("El nuevo estado es requerido y debe ser válido");
+    }
+    
+    if (cambioEstado.comentario && cambioEstado.comentario.length > 2000) {
+      errores.push("El comentario no puede exceder 2000 caracteres");
+    }
+    
+    if (!cambioEstado.usuarioId || cambioEstado.usuarioId <= 0) {
+      errores.push("El ID del usuario es requerido");
+    }
+    
+    if (!cambioEstado.tipoUsuario || !this.obtenerTiposUsuario().includes(cambioEstado.tipoUsuario)) {
+      errores.push("El tipo de usuario es requerido y debe ser válido");
+    }
+    
+    if (!cambioEstado.nombreUsuario || cambioEstado.nombreUsuario.trim().length === 0) {
+      errores.push("El nombre del usuario es requerido");
+    }
+    
+    return errores;
+  },
+
+  validarLlamadaRecurrente(llamada: CrearLlamadaRecurrenteDto): string[] {
+    const errores: string[] = [];
+    
+    if (!llamada.fechaHoraLlamada) {
+      errores.push("La fecha y hora de la llamada es requerida");
+    }
+    
+    if (llamada.fechaHoraLlamada && new Date(llamada.fechaHoraLlamada) > new Date()) {
+      errores.push("La fecha de la llamada no puede ser futura");
+    }
+    
+    if (!llamada.nombreLlamante || llamada.nombreLlamante.trim().length === 0) {
+      errores.push("El nombre del llamante es requerido");
+    }
+    
+    if (!llamada.telefonoLlamante || llamada.telefonoLlamante.trim().length === 0) {
+      errores.push("El teléfono del llamante es requerido");
+    }
+    
+    if (!llamada.operadorId || llamada.operadorId <= 0) {
+      errores.push("El ID del operador es requerido");
+    }
+    
+    return errores;
   },
 };
