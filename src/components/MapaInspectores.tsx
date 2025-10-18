@@ -34,6 +34,10 @@ const MapaInspectores: React.FC<MapaInspectoresProps> = ({
   const mapInstanceRef = useRef<google.maps.Map | null>(null);
   const markersRef = useRef<google.maps.Marker[]>([]);
 
+  // Validar coordenadas para mostrar en el JSX
+  const latValidada = typeof latitudIncidente === 'number' ? latitudIncidente : parseFloat(latitudIncidente);
+  const lngValidada = typeof longitudIncidente === 'number' ? longitudIncidente : parseFloat(longitudIncidente);
+
   useEffect(() => {
     if (!mapRef.current || !window.google) return;
 
@@ -204,7 +208,7 @@ const MapaInspectores: React.FC<MapaInspectoresProps> = ({
       </Typography>
       
       <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-        {direccionIncidente || `Coordenadas: ${lat.toFixed(6)}, ${lng.toFixed(6)}`}
+        {direccionIncidente || `Coordenadas: ${latValidada.toFixed(6)}, ${lngValidada.toFixed(6)}`}
       </Typography>
 
       {/* Leyenda */}
