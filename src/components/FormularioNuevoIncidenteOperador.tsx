@@ -614,11 +614,16 @@ export default function FormularioNuevoIncidenteOperador({
                     onLocationChange={(c) => {
                       setCoords(c);
                       if (c) {
-                        setDatosFormulario((prev) => ({
-                          ...prev,
-                          latitud: c.lat.toString(),
-                          longitud: c.lng.toString(),
-                        }));
+                        const lat = typeof c.lat === 'number' ? c.lat : parseFloat(c.lat);
+                        const lng = typeof c.lng === 'number' ? c.lng : parseFloat(c.lng);
+                        
+                        if (!isNaN(lat) && !isNaN(lng)) {
+                          setDatosFormulario((prev) => ({
+                            ...prev,
+                            latitud: lat.toString(),
+                            longitud: lng.toString(),
+                          }));
+                        }
                       }
                     }}
                   />

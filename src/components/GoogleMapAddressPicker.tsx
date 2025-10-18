@@ -53,12 +53,22 @@ const GoogleMapAddressPicker: React.FC<Props> = ({
         listenerClick = mapa.addListener("click", async (e: google.maps.MapMouseEvent) => {
           const pos = e.latLng;
           if (!pos) return;
+          
+          const lat = pos.lat();
+          const lng = pos.lng();
+          
+          // Validar que las coordenadas sean números válidos
+          if (isNaN(lat) || isNaN(lng)) {
+            console.error('Coordenadas inválidas del click:', { lat, lng });
+            return;
+          }
+          
           mk.setPosition(pos);
           mapa.panTo(pos);
-          if (onLocationChange) onLocationChange({ lat: pos.lat(), lng: pos.lng() });
+          if (onLocationChange) onLocationChange({ lat, lng });
           if (gc) {
             try {
-              const direccion = await geocodeLatLng(gc, { lat: pos.lat(), lng: pos.lng() });
+              const direccion = await geocodeLatLng(gc, { lat, lng });
               onChange(direccion);
             } catch {}
           }
@@ -84,9 +94,18 @@ const GoogleMapAddressPicker: React.FC<Props> = ({
       geocoder.geocode({ address: value }, (results: google.maps.GeocoderResult[] | null, status: google.maps.GeocoderStatus) => {
         if (status === "OK" && results && results[0] && results[0].geometry) {
           const loc = results[0].geometry.location!;
+          const lat = loc.lat();
+          const lng = loc.lng();
+          
+          // Validar que las coordenadas sean números válidos
+          if (isNaN(lat) || isNaN(lng)) {
+            console.error('Coordenadas inválidas del geocoder:', { lat, lng });
+            return;
+          }
+          
           map.panTo(loc);
           marker.setPosition(loc);
-          if (onLocationChange) onLocationChange({ lat: loc.lat(), lng: loc.lng() });
+          if (onLocationChange) onLocationChange({ lat, lng });
         }
       });
     } catch {}

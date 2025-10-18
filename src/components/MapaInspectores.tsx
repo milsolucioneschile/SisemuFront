@@ -37,10 +37,19 @@ const MapaInspectores: React.FC<MapaInspectoresProps> = ({
   useEffect(() => {
     if (!mapRef.current || !window.google) return;
 
+    // Validar que las coordenadas sean números válidos
+    const lat = typeof latitudIncidente === 'number' ? latitudIncidente : parseFloat(latitudIncidente);
+    const lng = typeof longitudIncidente === 'number' ? longitudIncidente : parseFloat(longitudIncidente);
+    
+    if (isNaN(lat) || isNaN(lng)) {
+      console.error('Coordenadas inválidas:', { latitudIncidente, longitudIncidente });
+      return;
+    }
+
     // Crear el mapa centrado en el incidente
     const map = new google.maps.Map(mapRef.current, {
       zoom: 13,
-      center: { lat: latitudIncidente, lng: longitudIncidente },
+      center: { lat, lng },
       mapTypeId: google.maps.MapTypeId.ROADMAP,
       styles: [
         {
@@ -59,7 +68,7 @@ const MapaInspectores: React.FC<MapaInspectoresProps> = ({
 
     // Crear marcador para el incidente
     const incidenteMarker = new google.maps.Marker({
-      position: { lat: latitudIncidente, lng: longitudIncidente },
+      position: { lat, lng },
       map: map,
       title: `Incidente: ${direccionIncidente || 'Ubicación del incidente'}`,
       icon: {
@@ -78,11 +87,20 @@ const MapaInspectores: React.FC<MapaInspectoresProps> = ({
 
     // Crear marcadores para los inspectores
     inspectores.forEach((inspector) => {
+      // Validar coordenadas del inspector
+      const inspectorLat = typeof inspector.latitud === 'number' ? inspector.latitud : parseFloat(inspector.latitud);
+      const inspectorLng = typeof inspector.longitud === 'number' ? inspector.longitud : parseFloat(inspector.longitud);
+      
+      if (isNaN(inspectorLat) || isNaN(inspectorLng)) {
+        console.error('Coordenadas inválidas del inspector:', inspector);
+        return;
+      }
+
       const isSelected = inspectorSeleccionado === inspector.id.toString();
       const isDisponible = inspector.disponible;
       
       const marker = new google.maps.Marker({
-        position: { lat: inspector.latitud, lng: inspector.longitud },
+        position: { lat: inspectorLat, lng: inspectorLng },
         map: map,
         title: `${inspector.nombre}${inspector.distanciaFormateada ? ` - ${inspector.distanciaFormateada}` : ''}`,
         icon: {
@@ -120,7 +138,7 @@ const MapaInspectores: React.FC<MapaInspectoresProps> = ({
             ` : ''}
             <p style="margin: 4px 0; color: #7f8c8d;">
               <strong>Coordenadas:</strong><br>
-              ${inspector.latitud.toFixed(6)}, ${inspector.longitud.toFixed(6)}
+              ${inspectorLat.toFixed(6)}, ${inspectorLng.toFixed(6)}
             </p>
             ${inspector.disponible ? `
               <button 
@@ -159,9 +177,14 @@ const MapaInspectores: React.FC<MapaInspectoresProps> = ({
 
     // Ajustar el zoom para mostrar todos los marcadores
     const bounds = new google.maps.LatLngBounds();
-    bounds.extend({ lat: latitudIncidente, lng: longitudIncidente });
+    bounds.extend({ lat, lng });
     inspectores.forEach(inspector => {
-      bounds.extend({ lat: inspector.latitud, lng: inspector.longitud });
+      const inspectorLat = typeof inspector.latitud === 'number' ? inspector.latitud : parseFloat(inspector.latitud);
+      const inspectorLng = typeof inspector.longitud === 'number' ? inspector.longitud : parseFloat(inspector.longitud);
+      
+      if (!isNaN(inspectorLat) && !isNaN(inspectorLng)) {
+        bounds.extend({ lat: inspectorLat, lng: inspectorLng });
+      }
     });
     map.fitBounds(bounds);
 
@@ -181,7 +204,7 @@ const MapaInspectores: React.FC<MapaInspectoresProps> = ({
       </Typography>
       
       <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-        {direccionIncidente || `Coordenadas: ${latitudIncidente.toFixed(6)}, ${longitudIncidente.toFixed(6)}`}
+        {direccionIncidente || `Coordenadas: ${lat.toFixed(6)}, ${lng.toFixed(6)}`}
       </Typography>
 
       {/* Leyenda */}
