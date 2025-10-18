@@ -70,24 +70,26 @@ const MapaInspectores: React.FC<MapaInspectoresProps> = ({
     markersRef.current.forEach(marker => marker.setMap(null));
     markersRef.current = [];
 
-    // Crear marcador para el incidente
-    const incidenteMarker = new google.maps.Marker({
-      position: { lat, lng },
-      map: map,
-      title: `Incidente: ${direccionIncidente || 'Ubicación del incidente'}`,
-      icon: {
-        path: google.maps.SymbolPath.CIRCLE,
-        scale: 12,
-        fillColor: '#e74c3c',
-        fillOpacity: 1,
-        strokeColor: '#ffffff',
-        strokeWeight: 3,
-      },
-      zIndex: 1000,
-    });
+    // Crear marcador para el incidente solo si las coordenadas son válidas
+    if (!isNaN(lat) && !isNaN(lng) && lat !== null && lng !== null) {
+      const incidenteMarker = new google.maps.Marker({
+        position: { lat, lng },
+        map: map,
+        title: `Incidente: ${direccionIncidente || 'Ubicación del incidente'}`,
+        icon: {
+          path: google.maps.SymbolPath.CIRCLE,
+          scale: 12,
+          fillColor: '#e74c3c',
+          fillOpacity: 1,
+          strokeColor: '#ffffff',
+          strokeWeight: 3,
+        },
+        zIndex: 1000,
+      });
 
-    // Agregar el marcador del incidente a la lista para limpieza
-    markersRef.current.push(incidenteMarker);
+      // Agregar el marcador del incidente a la lista para limpieza
+      markersRef.current.push(incidenteMarker);
+    }
 
     // Crear marcadores para los inspectores
     inspectores.forEach((inspector) => {
@@ -95,7 +97,7 @@ const MapaInspectores: React.FC<MapaInspectoresProps> = ({
       const inspectorLat = typeof inspector.latitud === 'number' ? inspector.latitud : parseFloat(inspector.latitud);
       const inspectorLng = typeof inspector.longitud === 'number' ? inspector.longitud : parseFloat(inspector.longitud);
       
-      if (isNaN(inspectorLat) || isNaN(inspectorLng)) {
+      if (isNaN(inspectorLat) || isNaN(inspectorLng) || inspectorLat === null || inspectorLng === null) {
         console.error('Coordenadas inválidas del inspector:', inspector);
         return;
       }
@@ -142,7 +144,7 @@ const MapaInspectores: React.FC<MapaInspectoresProps> = ({
             ` : ''}
             <p style="margin: 4px 0; color: #7f8c8d;">
               <strong>Coordenadas:</strong><br>
-              ${inspectorLat.toFixed(6)}, ${inspectorLng.toFixed(6)}
+              ${!isNaN(inspectorLat) && !isNaN(inspectorLng) ? `${inspectorLat.toFixed(6)}, ${inspectorLng.toFixed(6)}` : 'Coordenadas no disponibles'}
             </p>
             ${inspector.disponible ? `
               <button 
@@ -181,16 +183,25 @@ const MapaInspectores: React.FC<MapaInspectoresProps> = ({
 
     // Ajustar el zoom para mostrar todos los marcadores
     const bounds = new google.maps.LatLngBounds();
-    bounds.extend({ lat, lng });
+    
+    // Solo agregar el incidente si tiene coordenadas válidas
+    if (!isNaN(lat) && !isNaN(lng) && lat !== null && lng !== null) {
+      bounds.extend({ lat, lng });
+    }
+    
     inspectores.forEach(inspector => {
       const inspectorLat = typeof inspector.latitud === 'number' ? inspector.latitud : parseFloat(inspector.latitud);
       const inspectorLng = typeof inspector.longitud === 'number' ? inspector.longitud : parseFloat(inspector.longitud);
       
-      if (!isNaN(inspectorLat) && !isNaN(inspectorLng)) {
+      if (!isNaN(inspectorLat) && !isNaN(inspectorLng) && inspectorLat !== null && inspectorLng !== null) {
         bounds.extend({ lat: inspectorLat, lng: inspectorLng });
       }
     });
-    map.fitBounds(bounds);
+    
+    // Solo ajustar bounds si hay al menos un punto válido
+    if (!bounds.isEmpty()) {
+      map.fitBounds(bounds);
+    }
 
     // Asegurar que el zoom no sea demasiado lejano
     const listener = google.maps.event.addListener(map, 'idle', () => {
@@ -208,7 +219,7 @@ const MapaInspectores: React.FC<MapaInspectoresProps> = ({
       </Typography>
       
       <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-        {direccionIncidente || `Coordenadas: ${latValidada.toFixed(6)}, ${lngValidada.toFixed(6)}`}
+        {direccionIncidente || (isNaN(latValidada) || isNaN(lngValidada) ? 'Coordenadas no disponibles' : `Coordenadas: ${latValidada.toFixed(6)}, ${lngValidada.toFixed(6)}`)}
       </Typography>
 
       {/* Leyenda */}
